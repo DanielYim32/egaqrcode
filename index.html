@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>EGA x AIA Scanner</title>
+  <style>
+    body, html { margin:0; padding:0; height:100%; background:#000; color:#0f0; font-family:Arial; overflow:hidden; }
+    #overlay { position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; box-sizing:border-box; border:20px solid rgba(0,255,0,0.3); border-radius:20px; }
+    #video { width:100%; height:100%; object-fit:cover; }
+    #status { position:absolute; bottom:40px; left:0; right:0; font-size:48px; text-align:center; color:#0f0; text-shadow:0 0 10px #0f0; }
+  </style>
+</head>
+<body>
+  <div id="overlay"></div>
+  <video id="video" playsinline></video>
+  <div id="status">Point at QR code</div>
+
+  <script src="https://unpkg.com/@zxing/library@0.20.0"></script>
+  <script>
+    const video = document.getElementById('video');
+    const status = document.getElementById('status');
+    const overlay = document.getElementById('overlay');
+    let lastScanned = 0;
+
+    const codeReader = new ZXing.BrowserQRCodeReader();
+    codeReader.decodeFromVideoDevice(undefined, video, (result, err) => {
+      if (result && Date.now() - lastScanned > 2000) {
+        lastScanned = Date.now();
+        const url = result.getText();
+        status.textContent = "Validating...";
+        overlay.style.borderColor = "#00ff00";
+
+        fetch(url).then(r => r.text()).then(html => {
+          document.body.innerHTML = html;
+        }).catch(() => {
+          status.textContent = "Network error";
+          overlay.style.borderColor = "#ff0000";
+        });
+      }
+    });
+  </script>
+</body>
+</html>
