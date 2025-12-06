@@ -3,57 +3,66 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>EGA x AIA Scanner</title>
+  <title>EGA Scanner</title>
   <style>
     body, html { margin:0; padding:0; height:100%; background:#000; color:#0f0; font-family:Arial; text-align:center; overflow:hidden; }
-    #start { height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center; }
-    #start button { font-size:50px; padding:30px 60px; background:#0f0; color:#000; border:none; border-radius:20px; cursor:pointer; box-shadow:0 0 30px #0f0; }
-    #result { height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center; }
+    #start { height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:40px; }
+    #start h1 { font-size:80px; margin:0; color:#0f0; text-shadow:0 0 20px #0f0; }
+    #start button { font-size:50px; padding:25px 50px; background:#0f0; color:#000; border:none; border-radius:20px; cursor:pointer; box-shadow:0 0 30px #0f0; }
+    #scanner { display:none; flex-direction:column; justify-content:center; align-items:center; height:100%; gap:20px; }
+    #video { width:90%; max-width:500px; height:auto; border:15px solid #0f0; border-radius:20px; }
+    #status { font-size:40px; color:#0f0; }
+    #result { display:none; height:100%; flex-direction:column; justify-content:center; align-items:center; color:white; }
     h1 { font-size:90px; margin:0; }
-    p { font-size:40px; margin:20px 0 0; }
+    p { font-size:40px; margin:10px 0 0; }
   </style>
 </head>
 <body>
 
   <div id="start">
-    <h1>EGA x AIA</h1>
+    <h1>EGA</h1>
     <button id="scanBtn">CLICK TO SCAN</button>
   </div>
 
-  <div id="result" style="display:none"></div>
+  <div id="scanner">
+    <video id="video" playsinline></video>
+    <div id="status">Point at QR code</div>
+  </div>
+
+  <div id="result"></div>
 
   <script src="https://unpkg.com/@zxing/library@0.20.0"></script>
   <script>
     const startDiv = document.getElementById('start');
+    const scannerDiv = document.getElementById('scanner');
     const resultDiv = document.getElementById('result');
+    const video = document.getElementById('video');
+    const status = document.getElementById('status');
     const scanBtn = document.getElementById('scanBtn');
 
-    // ←←← YOUR SECRET KEY (must match Google Script) ←←←
-    const SECRET_KEY = "candle2025ega!";
+    const SECRET_KEY = "candle2025ega!";   // ← your secret key
 
     scanBtn.onclick = () => {
       startDiv.style.display = 'none';
-      resultDiv.style.display = 'flex';
-      resultDiv.innerHTML = '<p>Opening camera...</p>';
+      scannerDiv.style.display = 'flex';
+      status.textContent = "Point at QR code";
 
       const codeReader = new ZXing.BrowserQRCodeReader();
-
-      codeReader.decodeFromVideoDevice(undefined, null, (result, err) => {
+      codeReader.decodeFromVideoDevice(undefined, video, (result, err) => {
         if (result) {
           const url = result.getText() + "&key=" + SECRET_KEY;
-
           fetch(url)
             .then(r => r.text())
             .then(html => {
-              resultDiv.innerHTML = html;                    // GREEN or RED from your script
-              setTimeout(() => location.reload(), 4000);     // back to button after 4s
+              scannerDiv.style.display = 'none';
+              resultDiv.style.display = 'flex';
+              resultDiv.innerHTML = html;
+              setTimeout(() => location.reload(), 4000);
             })
             .catch(() => {
-              resultDiv.innerHTML = `
-                <div style="color:#ff4444;">
-                  <h1>SCAN FAILED</h1>
-                  <p>Try again</p>
-                </div>`;
+              scannerDiv.style.display = 'none';
+              resultDiv.style.display = 'flex';
+              resultDiv.innerHTML = '<div style="color:#ff4444;"><h1>SCAN FAILED</h1><p>Try again</p></div>';
               setTimeout(() => location.reload(), 3000);
             });
         }
