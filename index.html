@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>EGA x AIA Scanner</title>
   <style>
-    body, html { margin:0; padding:0; height:100%; background:#000; color:#0f0; font-family:Arial; overflow:hidden; }
+    body, html { margin:0; padding:0; height:100%; background:#000; overflow:hidden; }
     #overlay { position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; box-sizing:border-box; border:20px solid rgba(0,255,0,0.3); border-radius:20px; }
     #video { width:100%; height:100%; object-fit:cover; }
-    #status { position:absolute; bottom:40px; left:0; right:0; font-size:48px; text-align:center; color:#0f0; text-shadow:0 0 10px #0f0; }
+    #status { position:absolute; bottom:40px; left:0; right:0; font-size:48px; text-align:center; color:#0f0; text-shadow:0 0 15px #0f0; }
   </style>
 </head>
 <body>
@@ -23,20 +23,30 @@
     const overlay = document.getElementById('overlay');
     let lastScanned = 0;
 
+    // ←←← YOUR SECRET KEY (must match Google Script) ←←←
+    const SECRET_KEY = "candle2025ega!";   // ← change if you used a different one
+
     const codeReader = new ZXing.BrowserQRCodeReader();
+
     codeReader.decodeFromVideoDevice(undefined, video, (result, err) => {
       if (result && Date.now() - lastScanned > 2000) {
         lastScanned = Date.now();
-        const url = result.getText();
-        status.textContent = "Validating...";
-        overlay.style.borderColor = "#00ff00";
+        const url = result.getText() + "&key=" + SECRET_KEY;
 
-        fetch(url).then(r => r.text()).then(html => {
-          document.body.innerHTML = html;
-        }).catch(() => {
-          status.textContent = "Network error";
-          overlay.style.borderColor = "#ff0000";
-        });
+        status.textContent = "Validating...";
+        overlay.style.border = "20px solid #00ff00";
+
+        fetch(url)
+          .then(r => r.text())
+          .then(html => {
+            document.body.innerHTML = html;        // shows your GREEN / RED screen
+            setTimeout(() => location.reload(), 4000);  // auto-reset after 4 seconds
+          })
+          .catch(() => {
+            status.textContent = "Network error";
+            overlay.style.border = "20px solid #ff0000";
+            setTimeout(() => location.reload(), 4000);
+          });
       }
     });
   </script>
